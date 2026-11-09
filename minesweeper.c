@@ -165,7 +165,7 @@ static ssize_t dev_read(struct file *file, char __user *buf, size_t count, loff_
     if (!kbuf)
         return -ENOMEM;
 
-    mutex_lock(&ms_lock);
+    guard(mutex)(&ms_lock);
 
     len += scnprintf(kbuf + len, BUF_SIZE - len, "\n=== KERNEL MINESWEEPER ===\n  ");
     for (x = 0; x < BOARD_W; x++)
@@ -201,8 +201,6 @@ static ssize_t dev_read(struct file *file, char __user *buf, size_t count, loff_
     len += scnprintf(kbuf + len, BUF_SIZE - len,
                      "Commands: 'c X Y' (click), 'f X Y' (flag), 'r' (reset)\n\n");
 
-    mutex_unlock(&ms_lock);
-
     ret = simple_read_from_buffer(buf, count, ppos, kbuf, len);
     kfree(kbuf);
     return ret;
@@ -220,7 +218,7 @@ static ssize_t dev_write(struct file *file, const char __user *buf, size_t count
 
     kbuf[copy_len] = '\0';
 
-    mutex_lock(&ms_lock);
+    guard(mutex)(&ms_lock);
 
     if (strstarts(kbuf, "reset") || strstarts(kbuf, "r")) {
         init_game();
@@ -231,7 +229,6 @@ static ssize_t dev_write(struct file *file, const char __user *buf, size_t count
             action_flag(x, y);
     }
 
-    mutex_unlock(&ms_lock);
     return count;
 }
 
